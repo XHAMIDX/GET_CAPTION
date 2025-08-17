@@ -76,3 +76,34 @@ checkpoints/downloads/
 tmp/
 temp/
 *.tmp
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore virtual environments
+venv/
+.env/
+
+# Ignore checkpoints and large files
+*.ckpt
+*.pth
+*.h5
+*.pt
+checkpoints/
+logs/
+outputs/
+models/
+*.zip
+*.tar.gz
+*.mp4
+*.avi
+*.mov
+*.jpg
+*.png
+*.npy
+*.npz
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/

@@ -25,10 +25,10 @@ class DetectionPipeline:
     def __init__(
         self,
         detection_model: str = "yolov8n.pt",
-        sam_model: str = "sam2_b.pt",
+        sam_model: str = "sam2_t.pt",
         conf_threshold: float = 0.25,
         iou_threshold: float = 0.45,
-        device: str = "cpu"
+        device: str = "cuda:8"
     ):
         """Initialize detection pipeline.
         
@@ -42,9 +42,19 @@ class DetectionPipeline:
         self.device = device
         self.logger = logging.getLogger(__name__)
         
+        # Try to get model paths from config if available
+        try:
+            from ..config import ModelPathsConfig
+            model_paths = ModelPathsConfig()
+            detection_model_path = model_paths.get_detection_model_path(detection_model)
+            sam_model_path = model_paths.get_detection_model_path(sam_model)
+        except ImportError:
+            detection_model_path = detection_model
+            sam_model_path = sam_model
+        
         # Initialize detector
         self.detector = ObjectDetector(
-            model_name=detection_model,
+            model_name=detection_model_path,
             conf_threshold=conf_threshold,
             iou_threshold=iou_threshold,
             device=device
@@ -52,7 +62,7 @@ class DetectionPipeline:
         
         # Initialize mask generator
         self.mask_generator = MaskGenerator(
-            model_name=sam_model,
+            model_name=sam_model_path,
             device=device
         )
     

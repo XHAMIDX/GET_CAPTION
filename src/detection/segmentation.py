@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 from typing import List, Dict, Tuple, Any, Optional
 import logging
+import os
 
 try:
     from ultralytics import SAM
@@ -39,14 +40,36 @@ class MaskGenerator:
             self.logger.warning("Using fallback bbox-based masks instead of SAM2")
     
     def _load_sam_model(self) -> None:
-        """Load SAM2 model."""
+        """Load SAM2 model with improved error handling."""
         try:
-            self.model = SAM(self.model_name)
+            # Check if model file exists and is valid
+            if os.path.exists(self.model_name):
+                file_size = os.path.getsize(self.model_name)
+                if file_size < 1024:  # Less than 1KB indicates corrupted file
+                    raise ValueError(f"Model file {self.model_name} appears to be corrupted (size: {file_size} bytes)")
+                
+                self.logger.info(f"Loading SAM2 model from local path: {self.model_name}")
+                self.model = SAM(self.model_name)
+            else:
+                # Try to download the model
+                self.logger.info(f"Downloading SAM2 model: {self.model_name}")
+                self.model = SAM(self.model_name)
+            
             self.model.to(self.device)
-            self.logger.info(f"Loaded SAM2 model: {self.model_name} on {self.device}")
+            self.logger.info(f"Successfully loaded SAM2 model: {self.model_name} on {self.device}")
+            
         except Exception as e:
-            self.logger.warning(f"Failed to load SAM2 model: {e}. Using fallback.")
+            error_msg = str(e)
+            if "PytorchStreamReader failed reading zip archive" in error_msg:
+                self.logger.error(f"SAM2 model file {self.model_name} is corrupted or incomplete. Please re-download the model.")
+            elif "failed finding central directory" in error_msg:
+                self.logger.error(f"SAM2 model file {self.model_name} is corrupted. Please re-download the model.")
+            else:
+                self.logger.error(f"Failed to load SAM2 model: {error_msg}")
+            
+            self.logger.info("Falling back to bbox-based masks")
             self.use_sam = False
+            self.model = None
     
     def generate_masks(
         self, 

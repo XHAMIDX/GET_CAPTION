@@ -17,6 +17,7 @@ tokenizers>=0.13.0
 # Logging and utilities
 colorlog>=6.0.0
 tqdm>=4.60.0
+packaging>=21.0  # For version parsing (replaces pkg_resources)
 
 # Image processing
 matplotlib>=3.5.0

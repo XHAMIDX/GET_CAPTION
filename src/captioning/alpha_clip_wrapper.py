@@ -50,14 +50,28 @@ class AlphaCLIPWrapper:
                 )
                 self.model_name = "ViT-B/32"
             
+            # Try to get checkpoint path from config if available
+            checkpoint_path = None
+            try:
+                from ..config import ModelPathsConfig
+                model_paths = ModelPathsConfig()
+                checkpoint_path = model_paths.get_alpha_clip_path(self.model_name)
+                if not os.path.exists(checkpoint_path):
+                    checkpoint_path = None
+            except ImportError:
+                pass
+            
             # Load model
             self.model, self.preprocess = load(
                 self.model_name, 
+                alpha_vision_ckpt_pth=checkpoint_path,
                 device=self.device
             )
             self.model.eval()
             
             self.logger.info(f"Loaded AlphaCLIP model: {self.model_name} on {self.device}")
+            if checkpoint_path:
+                self.logger.info(f"Using checkpoint: {checkpoint_path}")
             
         except ImportError as e:
             self.logger.error(f"Failed to import AlphaCLIP: {e}")
